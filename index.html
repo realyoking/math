@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>格仔筆記 · 因式分解</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700;9..144,900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --ink:#0B0E14;
+      --ink-2:#11151f;
+      --paper:#F5F2EA;
+      --paper-2:#EFE9DA;
+      --rule:#E0D9C8;
+      --margin:#C0463A;
+      --margin-line:rgba(192,70,58,0.35);
+      --accent:#FF6B35;
+      --blue:#3D5AFE;
+      --green:#2E7D5B;
+      --muted:#8a8578;
+      --bg:#000000;
+      --text:#F5F2EA;
+      --dot:rgba(255,255,255,0.035);
+      --grid-line:rgba(255,255,255,0.045);
+      --glow-ambient:rgba(255,107,53,0.07);
+      --nav-bg:#171b26;
+      --nav-border:rgba(255,255,255,0.06);
+      --nav-muted:rgba(255,255,255,0.4);
+    }
+    html.light{
+      --ink:#0B0E14;
+      --paper:#FFFFFF;
+      --paper-2:#F4F0E6;
+      --rule:#E4DECE;
+      --muted:#9a9486;
+      --bg:#FFFFFF;
+      --text:#0B0E14;
+      --dot:rgba(11,14,20,0.04);
+      --grid-line:rgba(11,14,20,0.075);
+      --glow-ambient:rgba(255,107,53,0.10);
+      --nav-bg:#FFFFFF;
+      --nav-border:rgba(11,14,20,0.08);
+      --nav-muted:rgba(11,14,20,0.35);
+      --margin-line:rgba(192,70,58,0.3);
+    }
+    *{ -webkit-tap-highlight-color: transparent; }
+    body{
+      font-family:'Inter',-apple-system,sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      background-image:
+        linear-gradient(90deg, transparent 51px, var(--margin-line) 51px, var(--margin-line) 52.5px, transparent 52.5px),
+        linear-gradient(var(--grid-line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+      background-size: 100% 100%, 28px 28px, 28px 28px;
+      background-repeat: no-repeat, repeat, repeat;
+      background-attachment: fixed, scroll, scroll;
+      transition: background-color .3s, color .3s;
+    }
+    body::before{
+      content:"";
+      position:fixed; inset:0;
+      background: radial-gradient(60% 45% at 50% 0%, var(--glow-ambient), transparent 70%);
+      pointer-events:none; z-index:0;
+    }
+    .font-display{ font-family:'Fraunces','Inter',serif; font-feature-settings:"liga" 1; }
+    .font-mono{ font-family:'JetBrains Mono',monospace; }
+
+    .glow-card{
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 12px 40px -16px rgba(255,107,53,0.18), 0 2px 24px -8px rgba(0,0,0,0.5);
+    }
+    html.light .glow-card{
+      box-shadow: 0 0 0 1px rgba(11,14,20,0.04), 0 12px 32px -18px rgba(255,107,53,0.25), 0 4px 18px -10px rgba(11,14,20,0.08);
+    }
+    .glow-btn{
+      box-shadow: 0 0 0 1px rgba(255,107,53,0.0), 0 6px 20px -8px rgba(255,107,53,0.0);
+      transition: box-shadow .25s, transform .15s, filter .15s;
+    }
+    .glow-btn:hover{
+      box-shadow: 0 0 0 1px rgba(255,107,53,0.25), 0 8px 24px -8px rgba(255,107,53,0.45);
+    }
+    .glow-accent-ring{
+      box-shadow: 0 0 0 1px rgba(255,107,53,0.35), 0 0 24px -4px rgba(255,107,53,0.4);
+    }
+
+    /* content card */
+    .page{
+      background: var(--paper);
+      color: var(--ink);
+      border:1px solid rgba(0,0,0,0.06);
+      position:relative;
+      transition: background-color .3s, border-color .3s;
+    }
+    html.light .page{
+      border:1px solid rgba(11,14,20,0.08);
+    }
+
+    .ios-btn{ transition: transform .15s cubic-bezier(.4,0,.2,1), filter .15s, background .2s, border-color .2s, color .2s; }
+    .ios-btn:active{ transform: scale(0.96); }
+
+    .stamp{
+      display:inline-flex; align-items:center; gap:6px;
+      font-family:'JetBrains Mono',monospace;
+      font-size:10px; font-weight:800; letter-spacing:.18em; text-transform:uppercase;
+      padding:4px 9px; border-radius:5px;
+      border:1.5px solid currentColor;
+      transform: rotate(-2deg);
+    }
+
+    /* slider */
+    input[type="range"]{ -webkit-appearance:none; appearance:none; background:transparent; }
+    input[type="range"]::-webkit-slider-runnable-track{
+      height:3px; background: var(--rule); border-radius:2px;
+    }
+    input[type="range"]::-webkit-slider-thumb{
+      -webkit-appearance:none; appearance:none;
+      width:22px; height:22px; margin-top:-9.5px;
+      border-radius:50%;
+      background: var(--ink);
+      border:3px solid var(--accent);
+      box-shadow: 0 2px 6px rgba(0,0,0,.25);
+      cursor:pointer;
+    }
+    input[type="range"]::-moz-range-track{ height:3px; background: var(--rule); border-radius:2px; }
+    input[type="range"]::-moz-range-thumb{
+      width:22px; height:22px; border-radius:50%;
+      background: var(--ink); border:3px solid var(--accent); cursor:pointer;
+    }
+
+    /* tile grid cell base */
+    .tile{
+      border:1.5px solid rgba(11,14,20,0.12);
+      background: rgba(255,255,255,0.55);
+      transition: transform .18s cubic-bezier(.4,0,.2,1), box-shadow .18s, border-color .18s, background .18s;
+    }
+    .tile:hover{ transform: translateY(-2px); box-shadow: 0 6px 16px -6px rgba(255,107,53,0.25); }
+    .tile.active-cell{
+      transform: translateY(-3px) scale(1.03);
+      box-shadow: 0 8px 24px -4px rgba(255,107,53,0.4), 0 0 0 1px rgba(255,107,53,0.3);
+      border-color: var(--accent);
+      border-width:2px;
+    }
+    .tile.diag-glow{
+      box-shadow: inset 0 0 0 2px rgba(61,90,254,0.45), 0 0 16px -2px rgba(61,90,254,0.5);
+    }
+
+    @keyframes pop{ 0%{ transform: scale(.9); opacity:.4 } 100%{ transform: scale(1); opacity:1 } }
+    .pop{ animation: pop .25s cubic-bezier(.34,1.56,.64,1); }
+
+    @keyframes shake{
+      10%,90%{ transform: translateX(-1px) }
+      20%,80%{ transform: translateX(2px) }
+      30%,50%,70%{ transform: translateX(-3px) }
+      40%,60%{ transform: translateX(3px) }
+    }
+    .shake{ animation: shake .4s; }
+
+    .scrollbar-none::-webkit-scrollbar{ display:none; }
+    .scrollbar-none{ -ms-overflow-style:none; scrollbar-width:none; }
+
+    /* focus visibility */
+    button:focus-visible, [tabindex]:focus-visible{
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    @media (prefers-reduced-motion: reduce){
+      *{ animation:none !important; transition:none !important; }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- HEADER -->
+  <header class="px-5 pt-7 pb-3">
+    <div class="max-w-xl mx-auto">
+      <div class="flex items-center justify-between mb-5">
+        <span class="stamp" style="color:var(--accent); border-color:var(--accent);">EXERCISE BOOK</span>
+        <div class="flex items-center gap-2">
+          <span class="font-mono text-[11px] tracking-widest" style="color:var(--nav-muted);">FORM 3 · ALGEBRA</span>
+          <button onclick="toggleTheme()" id="theme-toggle" aria-label="切換淺色/深色模式" class="ios-btn glow-btn w-8 h-8 rounded-full flex items-center justify-center border" style="border-color:var(--nav-border); color:var(--text);">
+            <svg id="theme-icon-sun" class="w-4 h-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.36 6.36l-.71-.71M6.34 6.34l-.71-.71m12.73 0l-.71.71M6.34 17.66l-.71.71M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg>
+            <svg id="theme-icon-moon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+          </button>
+        </div>
+      </div>
+      <h1 class="font-display text-[2.6rem] leading-[1.05] font-black tracking-tight">
+        格仔<span style="color:var(--accent);">記憶法</span>
+      </h1>
+      <p class="text-white/45 text-sm mt-1.5 max-w-xs leading-relaxed">
+        用 2×2 格仔拆解每條展開式，紅線左側是你的工作邊欄。
+      </p>
+    </div>
+  </header>
+
+  <main class="max-w-xl mx-auto px-3 sm:px-5 flex-1 w-full space-y-4 pb-36">
+
+    <!-- TAB 1 -->
+    <div id="panel-explore" class="space-y-4">
+
+      <!-- preset selector -->
+      <div class="page rounded-2xl glow-card overflow-hidden">
+        <div class="py-1">
+          <div class="px-4 pt-3 pb-2 font-mono text-[10px] tracking-[0.2em] uppercase" style="color:var(--muted);">選擇公式 · choose a formula</div>
+
+          <button onclick="setPreset('square_plus')" id="row-preset-square_plus" class="w-full text-left px-4 py-3.5 flex items-center justify-between ios-btn group">
+            <div class="flex items-center gap-3">
+              <span class="font-display text-lg font-bold w-6 text-center" style="color:var(--blue);">A</span>
+              <span class="text-[15px] font-semibold">完全平方公式（加法）</span>
+            </div>
+            <span class="font-mono text-sm" style="color:var(--muted);">(a + b)²</span>
+          </button>
+
+          <button onclick="setPreset('square_minus')" id="row-preset-square_minus" class="w-full text-left px-4 py-3.5 flex items-center justify-between ios-btn group">
+            <div class="flex items-center gap-3">
+              <span class="font-display text-lg font-bold w-6 text-center" style="color:var(--margin);">B</span>
+              <span class="text-[15px] font-semibold">完全平方公式（減法）</span>
+            </div>
+            <span class="font-mono text-sm" style="color:var(--muted);">(a − b)²</span>
+          </button>
+
+          <button onclick="setPreset('diff_squares')" id="row-preset-diff_squares" class="w-full text-left px-4 py-3.5 flex items-center justify-between ios-btn group">
+            <div class="flex items-center gap-3">
+              <span class="font-display text-lg font-bold w-6 text-center" style="color:var(--green);">C</span>
+              <span class="text-[15px] font-semibold">平方差公式</span>
+            </div>
+            <span class="font-mono text-sm" style="color:var(--muted);">a² − b²</span>
+          </button>
+
+          <button onclick="setPreset('custom')" id="row-preset-custom" class="w-full text-left px-4 py-3.5 flex items-center justify-between ios-btn group">
+            <div class="flex items-center gap-3">
+              <span class="font-display text-lg font-bold w-6 text-center" style="color:var(--accent);">D</span>
+              <span class="text-[15px] font-semibold">自訂常數參數</span>
+            </div>
+            <span class="font-mono text-sm" style="color:var(--muted);">p · q</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- custom sliders -->
+      <div id="custom-sliders" class="page rounded-2xl glow-card p-4 space-y-5 hidden">
+        <div class="font-mono text-[10px] tracking-[0.2em] uppercase pt-1" style="color:var(--muted);">調整參數 · drag to adjust</div>
+        <div>
+          <div class="flex justify-between items-baseline mb-2">
+            <span class="text-sm font-semibold">常數 p</span>
+            <span id="label-custom-p" class="font-mono text-base font-bold" style="color:var(--accent);">+3</span>
+          </div>
+          <input type="range" min="-6" max="6" step="1" value="3" id="slider-custom-p" oninput="updateCustomParam('p', this.value)" class="w-full">
+        </div>
+        <div>
+          <div class="flex justify-between items-baseline mb-2">
+            <span class="text-sm font-semibold">常數 q</span>
+            <span id="label-custom-q" class="font-mono text-base font-bold" style="color:var(--accent);">+2</span>
+          </div>
+          <input type="range" min="-6" max="6" step="1" value="2" id="slider-custom-q" oninput="updateCustomParam('q', this.value)" class="w-full">
+        </div>
+      </div>
+
+      <!-- formula ribbon -->
+      <div class="page rounded-2xl glow-card p-5">
+        <div class="font-mono text-[10px] tracking-[0.2em] uppercase mb-1" style="color:var(--muted);">展開式 · formula</div>
+        <h2 id="formula-title" class="font-display text-lg font-bold" style="color:var(--ink);">完全平方公式（加法）</h2>
+        <div id="formula-expression" class="font-mono text-2xl sm:text-[1.7rem] font-extrabold mt-2 tracking-tight" style="color:var(--ink);">
+          (a + b)² = a² + 2ab + b²
+        </div>
+      </div>
+
+      <!-- factorization grid -->
+      <div class="page rounded-2xl glow-card p-5">
+        <div class="font-mono text-[10px] tracking-[0.2em] uppercase mb-4" style="color:var(--muted);">2×2 格仔 · tap a tile</div>
+
+        <div class="grid grid-cols-3 gap-2 max-w-[320px] mx-auto font-mono text-base mb-5">
+          <div class="flex items-center justify-center font-bold text-lg aspect-square" style="color:var(--muted);">×</div>
+          <div id="grid-header-top-0" class="tile flex items-center justify-center font-bold aspect-square rounded-xl" style="color:var(--ink);">a</div>
+          <div id="grid-header-top-1" class="tile flex items-center justify-center font-bold aspect-square rounded-xl" style="color:var(--ink);">+b</div>
+
+          <div id="grid-header-left-0" class="tile flex items-center justify-center font-bold aspect-square rounded-xl" style="color:var(--ink);">a</div>
+          <button id="cell-tl" onclick="clickCell('tl')" class="tile relative rounded-xl aspect-square flex flex-col items-center justify-center">
+            <span class="text-[9px] absolute top-1.5 left-2 font-bold" style="color:var(--muted);">A</span>
+            <span id="cell-tl-val" class="font-extrabold text-lg sm:text-xl" style="color:var(--blue);">a²</span>
+          </button>
+          <button id="cell-tr" onclick="clickCell('tr')" class="tile relative rounded-xl aspect-square flex flex-col items-center justify-center">
+            <span class="text-[9px] absolute top-1.5 left-2 font-bold" style="color:var(--muted);">B</span>
+            <span id="cell-tr-val" class="font-extrabold text-lg sm:text-xl" style="color:#7c5cff;">+ab</span>
+          </button>
+
+          <div id="grid-header-left-1" class="tile flex items-center justify-center font-bold aspect-square rounded-xl" style="color:var(--ink);">+b</div>
+          <button id="cell-bl" onclick="clickCell('bl')" class="tile relative rounded-xl aspect-square flex flex-col items-center justify-center">
+            <span class="text-[9px] absolute top-1.5 left-2 font-bold" style="color:var(--muted);">C</span>
+            <span id="cell-bl-val" class="font-extrabold text-lg sm:text-xl" style="color:#7c5cff;">+ab</span>
+          </button>
+          <button id="cell-br" onclick="clickCell('br')" class="tile relative rounded-xl aspect-square flex flex-col items-center justify-center">
+            <span class="text-[9px] absolute top-1.5 left-2 font-bold" style="color:var(--muted);">D</span>
+            <span id="cell-br-val" class="font-extrabold text-lg sm:text-xl" style="color:var(--green);">+b²</span>
+          </button>
+        </div>
+
+        <!-- info drawer -->
+        <div class="rounded-xl p-3.5 min-h-[60px] flex items-center" style="background:var(--paper-2); border:1.5px dashed var(--rule);">
+          <div id="cell-info-placeholder" class="text-xs text-center w-full" style="color:var(--muted);">
+            點擊 A / B / C / D 看運算拆解
+          </div>
+          <div id="cell-info-content" class="hidden w-full">
+            <span id="cell-info-title" class="text-[9px] font-extrabold tracking-wider block uppercase" style="color:var(--muted);"></span>
+            <p id="cell-info-desc" class="text-base font-bold font-mono mt-0.5" style="color:var(--accent);">a × a = a²</p>
+          </div>
+        </div>
+
+        <div class="mt-4 flex items-center gap-2.5">
+          <button onclick="toggleDiagonalHighlight()" id="btn-diagonal" class="px-4 py-2 rounded-full text-xs font-bold border ios-btn" style="border-color:var(--ink); color:var(--ink);">
+            高亮對角線
+          </button>
+          <span id="diagonal-hint" class="text-xs font-bold hidden" style="color:var(--blue);">↙ 相同同類項</span>
+        </div>
+      </div>
+
+      <!-- steps -->
+      <div class="page rounded-2xl glow-card p-5 space-y-4">
+        <h3 class="font-display text-base font-bold pb-2 border-b" style="border-color:var(--rule); color:var(--ink);">展開分解 · 步步解構</h3>
+
+        <div class="flex gap-3">
+          <div class="font-mono text-xs font-extrabold w-5 pt-0.5" style="color:var(--accent);">1</div>
+          <div class="flex-1">
+            <p class="font-bold text-sm" style="color:var(--ink);">將四個格仔數值併寫</p>
+            <div class="mt-2 font-mono text-xs px-3 py-2 rounded-lg" style="background:var(--paper-2); border:1.5px dashed var(--rule); color:var(--ink);">
+              <span id="step-1-tl" style="color:var(--blue);">a²</span> +
+              <span id="step-1-tr" style="color:#7c5cff;">+ab</span> +
+              <span id="step-1-bl" style="color:#7c5cff;">+ab</span> +
+              <span id="step-1-br" style="color:var(--green);">+b²</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex gap-3">
+          <div class="font-mono text-xs font-extrabold w-5 pt-0.5" style="color:var(--accent);">2</div>
+          <div class="flex-1">
+            <p class="font-bold text-sm" style="color:var(--ink);">合併同類對角線</p>
+            <p id="step-2-combine-desc" class="text-xs mt-1 leading-relaxed" style="color:var(--muted);"></p>
+            <div class="mt-2 font-mono text-xs px-3 py-1.5 rounded-lg" style="background:rgba(124,92,255,0.10); color:#5d3fd6;">
+              <span id="step-2-math"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex gap-3">
+          <div class="font-mono text-xs font-extrabold w-5 pt-0.5" style="color:var(--accent);">3</div>
+          <div class="flex-1">
+            <p class="font-bold text-sm" style="color:var(--ink);">最簡代數式</p>
+            <div id="step-3-result" class="mt-2 font-mono text-sm px-3 py-2 rounded-lg font-extrabold" style="background:rgba(46,125,91,0.10); color:var(--green); border:1.5px solid rgba(46,125,91,0.25);"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- TAB 2: GAME -->
+    <div id="panel-practice" class="space-y-4 hidden">
+
+      <div class="page rounded-2xl glow-card p-5 flex items-center justify-between">
+        <div>
+          <div class="font-mono text-[10px] tracking-[0.2em] uppercase mb-1" style="color:var(--muted);">分數 · score</div>
+          <div class="font-display text-3xl font-black" style="color:var(--ink);"><span id="game-score">0</span> <span class="text-base font-semibold" style="color:var(--muted);">分</span></div>
+        </div>
+        <div class="text-right">
+          <div class="font-mono text-[10px] tracking-[0.2em] uppercase mb-1" style="color:var(--muted);">連勝 · streak</div>
+          <div class="font-display text-3xl font-black flex items-center justify-end gap-1" style="color:var(--accent);">
+            <span id="game-streak">0</span><span class="text-base">🔥</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="page rounded-2xl glow-card p-5 text-center">
+        <div class="font-mono text-[10px] tracking-[0.2em] uppercase mb-2" style="color:var(--muted);">目標展開式 · target</div>
+        <div id="game-target-display" class="font-mono text-3xl sm:text-4xl font-extrabold tracking-tight" style="color:var(--ink);">
+          x² + 7x + 12
+        </div>
+      </div>
+
+      <div class="page rounded-2xl glow-card p-5">
+        <div class="grid grid-cols-3 gap-2 max-w-[320px] mx-auto font-mono text-base mb-5">
+          <div class="flex items-center justify-center font-bold text-lg aspect-square" style="color:var(--muted);">×</div>
+          <div class="tile flex items-center justify-center font-bold aspect-square rounded-xl" style="color:var(--ink);">x</div>
+          <div id="game-cell-top-p" class="tile flex flex-col items-center justify-center font-bold aspect-square rounded-xl">
+            <span class="text-[8px] uppercase font-bold mb-1" style="color:var(--muted);">p</span>
+            <span id="game-top-p-val" class="text-base font-bold" style="color:var(--accent);">?</span>
+          </div>
+
+          <div class="tile flex items-center justify-center font-bold aspect-square rounded-xl" style="color:var(--ink);">x</div>
+          <div class="tile flex items-center justify-center font-extrabold aspect-square rounded-xl" style="color:var(--blue); background:rgba(61,90,254,0.08);">x²</div>
+          <div id="game-cell-px" class="tile flex items-center justify-center font-bold aspect-square rounded-xl text-xs" style="color:var(--muted);">px</div>
+
+          <div id="game-cell-left-q" class="tile flex flex-col items-center justify-center font-bold aspect-square rounded-xl">
+            <span class="text-[8px] uppercase font-bold mb-1" style="color:var(--muted);">q</span>
+            <span id="game-left-q-val" class="text-base font-bold" style="color:var(--accent);">?</span>
+          </div>
+          <div id="game-cell-qx" class="tile flex items-center justify-center font-bold aspect-square rounded-xl text-xs" style="color:var(--muted);">qx</div>
+          <div class="tile flex flex-col items-center justify-center font-extrabold aspect-square rounded-xl" style="color:var(--green); background:rgba(46,125,91,0.08);">
+            <span class="text-[8px] uppercase" style="color:var(--muted);">常數項</span>
+            <span id="game-cell-prod-val" class="text-xs font-extrabold mt-0.5">PROD</span>
+          </div>
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-[10px] font-bold uppercase tracking-widest mb-2 text-center" style="color:var(--muted);">選擇因子 p</label>
+            <div id="option-pool-top" class="flex flex-wrap gap-1.5 justify-center"></div>
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold uppercase tracking-widest mb-2 text-center" style="color:var(--muted);">選擇因子 q</label>
+            <div id="option-pool-left" class="flex flex-wrap gap-1.5 justify-center"></div>
+          </div>
+        </div>
+
+        <div class="mt-7 flex flex-col items-center gap-4 w-full">
+          <div id="game-feedback" class="w-full p-3.5 rounded-xl border text-center hidden">
+            <div class="flex items-center justify-center gap-2 font-bold text-sm mb-1">
+              <span id="feedback-title"></span>
+            </div>
+            <p id="feedback-text" class="text-xs"></p>
+          </div>
+
+          <div class="flex justify-center items-center w-full gap-4">
+            <button onclick="resetGameSelection()" class="px-6 py-3 rounded-full font-bold text-sm ios-btn border" style="border-color:var(--rule); color:var(--muted); background:transparent;">
+              重置
+            </button>
+            <button id="btn-game-action" onclick="handleGameAction()" disabled class="px-8 py-3 rounded-full font-bold text-sm ios-btn glow-btn disabled:opacity-30 disabled:pointer-events-none" style="background:var(--ink); color:var(--paper);">
+              驗證
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- TAB 3: REFERENCE -->
+    <div id="panel-reference" class="space-y-4 hidden">
+
+      <div class="page rounded-2xl glow-card p-5">
+        <div class="font-mono text-[10px] tracking-[0.2em] uppercase mb-1" style="color:var(--muted);">公式卡 · cheat sheet</div>
+        <h2 class="font-display text-lg font-bold mb-4" style="color:var(--ink);">常用展開公式</h2>
+
+        <div class="space-y-3">
+          <div class="rounded-xl p-3.5" style="background:var(--paper-2); border-left:3px solid var(--blue);">
+            <div class="font-mono font-extrabold text-base sm:text-lg" style="color:var(--ink);">(a + b)² = a² + 2ab + b²</div>
+            <div class="text-xs mt-1" style="color:var(--muted);">完全平方公式（加法）</div>
+          </div>
+          <div class="rounded-xl p-3.5" style="background:var(--paper-2); border-left:3px solid var(--margin);">
+            <div class="font-mono font-extrabold text-base sm:text-lg" style="color:var(--ink);">(a − b)² = a² − 2ab + b²</div>
+            <div class="text-xs mt-1" style="color:var(--muted);">完全平方公式（減法）</div>
+          </div>
+          <div class="rounded-xl p-3.5" style="background:var(--paper-2); border-left:3px solid var(--green);">
+            <div class="font-mono font-extrabold text-base sm:text-lg" style="color:var(--ink);">(a + b)(a − b) = a² − b²</div>
+            <div class="text-xs mt-1" style="color:var(--muted);">平方差公式</div>
+          </div>
+          <div class="rounded-xl p-3.5" style="background:var(--paper-2); border-left:3px solid var(--accent);">
+            <div class="font-mono font-extrabold text-base sm:text-lg" style="color:var(--ink);">(x + p)(x + q) = x² + (p+q)x + pq</div>
+            <div class="text-xs mt-1" style="color:var(--muted);">十字交叉因式分解（一般式）</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page rounded-2xl glow-card p-5">
+        <div class="font-mono text-[10px] tracking-[0.2em] uppercase mb-3" style="color:var(--muted);">記憶口訣 · tips</div>
+        <ul class="space-y-2.5 text-sm" style="color:var(--ink);">
+          <li class="flex gap-2.5"><span style="color:var(--accent);">▸</span><span>同號相加，異號相減 — 對角線決定加減號。</span></li>
+          <li class="flex gap-2.5"><span style="color:var(--accent);">▸</span><span>負負得正：兩個負數相乘結果一定是正數。</span></li>
+          <li class="flex gap-2.5"><span style="color:var(--accent);">▸</span><span>找因子時，先看常數項的所有因子組合，再核對中間項的和。</span></li>
+          <li class="flex gap-2.5"><span style="color:var(--accent);">▸</span><span>平方差公式中間項必定抵消為 0，這是辨認的關鍵特徵。</span></li>
+        </ul>
+      </div>
+
+      <div class="page rounded-2xl glow-card p-5">
+        <div class="font-mono text-[10px] tracking-[0.2em] uppercase mb-3" style="color:var(--muted);">你的進度 · stats</div>
+        <div class="grid grid-cols-3 gap-3 text-center">
+          <div class="rounded-xl p-3" style="background:var(--paper-2);">
+            <div id="stat-score" class="font-display text-2xl font-black" style="color:var(--ink);">0</div>
+            <div class="text-[10px] mt-1 uppercase tracking-wider" style="color:var(--muted);">分數</div>
+          </div>
+          <div class="rounded-xl p-3" style="background:var(--paper-2);">
+            <div id="stat-streak" class="font-display text-2xl font-black" style="color:var(--accent);">0</div>
+            <div class="text-[10px] mt-1 uppercase tracking-wider" style="color:var(--muted);">最高連勝</div>
+          </div>
+          <div class="rounded-xl p-3" style="background:var(--paper-2);">
+            <div id="stat-attempts" class="font-display text-2xl font-black" style="color:var(--ink);">0</div>
+            <div class="text-[10px] mt-1 uppercase tracking-wider" style="color:var(--muted);">總嘗試</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- CREDITS -->
+    <div class="page rounded-2xl glow-card p-5">
+      <div class="font-mono text-[10px] tracking-[0.2em] uppercase mb-4" style="color:var(--muted);">製作團隊 · credits</div>
+
+      <div class="space-y-3">
+        <!-- Gemini -->
+        <div class="flex items-center gap-3 rounded-xl p-2.5" style="background:var(--paper-2);">
+          <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 overflow-hidden border" style="border-color:var(--rule); background:#fff;">
+            <img src="Gemini.png"
+                 alt="Gemini" loading="lazy"
+                 class="w-full h-full object-contain p-1.5"
+                 onerror="this.parentElement.innerHTML='<span class=\'font-display font-bold text-base\' style=\'color:var(--ink)\'>G</span>'">
+          </div>
+          <div class="flex-1">
+            <div class="font-semibold text-sm" style="color:var(--ink);">Gemini</div>
+            <div class="text-xs" style="color:var(--muted);">研究與題目設計</div>
+          </div>
+        </div>
+
+        <!-- Claude -->
+        <div class="flex items-center gap-3 rounded-xl p-2.5" style="background:var(--paper-2);">
+          <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 overflow-hidden border" style="border-color:var(--rule); background:#fff;">
+            <img src="Claude.png"
+                 alt="Claude" loading="lazy"
+                 class="w-full h-full object-contain p-2"
+                 onerror="this.parentElement.innerHTML='<span class=\'font-display font-bold text-base\' style=\'color:var(--accent)\'>C</span>'">
+          </div>
+          <div class="flex-1">
+            <div class="font-semibold text-sm" style="color:var(--ink);">Claude</div>
+            <div class="text-xs" style="color:var(--muted);">介面開發與設計</div>
+          </div>
+        </div>
+
+        <!-- Realyoking -->
+        <a href="https://www.instagram.com/realyoking?igsh=MTluanFsZHV1ZDZoNA%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" class="flex items-center gap-3 rounded-xl p-2.5 ios-btn glow-btn" style="background:var(--paper-2);">
+          <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 overflow-hidden border" style="border-color:var(--rule);">
+            <img src="me.png"
+                 alt="Realyoking" loading="lazy"
+                 class="w-full h-full object-cover"
+                 onerror="this.parentElement.style.background='var(--accent)'; this.parentElement.innerHTML='<span class=\'font-display font-bold text-base\' style=\'color:var(--ink)\'>R</span>'">
+          </div>
+          <div class="flex-1">
+            <div class="font-semibold text-sm flex items-center gap-1.5" style="color:var(--ink);">
+              Realyoking
+              <img src="badge.png" alt="verified" loading="lazy" class="w-4 h-4 inline-block"
+                   onerror="this.style.display='none'">
+            </div>
+            <div class="text-xs" style="color:var(--muted);">概念與企劃</div>
+          </div>
+          <div class="w-7 h-7 rounded-full flex items-center justify-center shrink-0" style="background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Instagram_logo_2016.svg/1280px-Instagram_logo_2016.svg.png"
+                 alt="Instagram" referrerpolicy="no-referrer" loading="lazy" class="w-4 h-4"
+                 style="filter:brightness(0) invert(1);"
+                 onerror="this.style.display='none'">
+          </div>
+        </a>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- BOTTOM NAV -->
+  <div class="fixed bottom-0 left-0 right-0 z-50 px-4 pb-6 pt-10 pointer-events-none" id="bottom-nav-wrap" style="background: linear-gradient(to top, var(--bg) 0%, color-mix(in srgb, var(--bg) 95%, transparent) 60%, transparent 100%);">
+    <div class="max-w-sm mx-auto rounded-full p-1.5 border flex shadow-2xl pointer-events-auto backdrop-blur-xl" style="background:color-mix(in srgb, var(--nav-bg) 90%, transparent); border-color:var(--nav-border);">
+      <button id="nav-explore" onclick="switchTab('explore')" class="flex-1 flex items-center justify-center gap-2 py-3 rounded-full text-sm font-bold ios-btn glow-accent-ring" style="background:var(--accent); color:var(--ink);">
+        <span class="font-display">公式探索</span>
+      </button>
+      <button id="nav-practice" onclick="switchTab('practice')" class="flex-1 flex items-center justify-center gap-2 py-3 rounded-full text-sm font-bold ios-btn" style="color:var(--nav-muted);">
+        <span class="font-display">格仔挑戰</span>
+      </button>
+      <button id="nav-reference" onclick="switchTab('reference')" class="flex-1 flex items-center justify-center gap-2 py-3 rounded-full text-sm font-bold ios-btn" style="color:var(--nav-muted);">
+        <span class="font-display">公式卡</span>
+      </button>
+    </div>
+  </div>
+
+  <script>
+    const state = {
+      activeTab: 'explore',
+      preset: 'square_plus',
+      customP: 3,
+      customQ: 2,
+      activeCell: null,
+      showDiagonalHighlight: false,
+      game: { p:4, q:3, display:"x² + 7x + 12", selectedTop:null, selectedLeft:null, isChecked:false, isCorrect:false, score:0, streak:0, bestStreak:0, attempts:0 }
+    };
+
+    const presets = {
+      square_plus: {
+        title: "完全平方公式（加法）",
+        formula: "(a + b)² = a² + 2ab + b²",
+        top: ["a", "+b"], left: ["a", "+b"],
+        cells: {
+          tl: { val: "a²",  desc: "a × a = a²" },
+          tr: { val: "+ab", desc: "a × (+b) = +ab" },
+          bl: { val: "+ab", desc: "(+b) × a = +ab" },
+          br: { val: "+b²", desc: "(+b) × (+b) = +b²" }
+        },
+        combineDesc: "對角線上的兩個 ab 是一模一樣的，可以直接相加合併成 2ab。"
+      },
+      square_minus: {
+        title: "完全平方公式（減法）",
+        formula: "(a − b)² = a² − 2ab + b²",
+        top: ["a", "-b"], left: ["a", "-b"],
+        cells: {
+          tl: { val: "a²",  desc: "a × a = a²" },
+          tr: { val: "-ab", desc: "a × (−b) = −ab" },
+          bl: { val: "-ab", desc: "(−b) × a = −ab" },
+          br: { val: "+b²", desc: "(−b) × (−b) = +b²（負負得正）" }
+        },
+        combineDesc: "注意右下角：−b 乘以 −b 負負得正，變成 +b²。對角線的兩個 −ab 合併為 −2ab。"
+      },
+      diff_squares: {
+        title: "平方差公式",
+        formula: "(a + b)(a − b) = a² − b²",
+        top: ["a", "+b"], left: ["a", "-b"],
+        cells: {
+          tl: { val: "a²",  desc: "a × a = a²" },
+          tr: { val: "+ab", desc: "a × (+b) = +ab" },
+          bl: { val: "-ab", desc: "(−b) × a = −ab" },
+          br: { val: "-b²", desc: "(−b) × (+b) = −b²（正負得負）" }
+        },
+        combineDesc: "對角線的 +ab 與 −ab 一正一負，完全抵消！只剩下左上與右下兩格。"
+      }
+    };
+
+    function switchTab(tab) {
+      state.activeTab = tab;
+      const navs = {
+        explore: document.getElementById('nav-explore'),
+        practice: document.getElementById('nav-practice'),
+        reference: document.getElementById('nav-reference')
+      };
+      const panels = {
+        explore: document.getElementById('panel-explore'),
+        practice: document.getElementById('panel-practice'),
+        reference: document.getElementById('panel-reference')
+      };
+
+      Object.keys(navs).forEach(key => {
+        const isActive = key === tab;
+        navs[key].style.background = isActive ? 'var(--accent)' : 'transparent';
+        navs[key].style.color = isActive ? 'var(--ink)' : 'var(--nav-muted)';
+        navs[key].classList.toggle('glow-accent-ring', isActive);
+        panels[key].classList.toggle('hidden', !isActive);
+      });
+
+      if (tab === 'practice') generateNewQuestion();
+      if (tab === 'reference') updateStats();
+    }
+
+    function updateStats() {
+      document.getElementById('stat-score').innerText = state.game.score;
+      document.getElementById('stat-streak').innerText = state.game.bestStreak;
+      document.getElementById('stat-attempts').innerText = state.game.attempts;
+    }
+
+    function toggleTheme() {
+      const html = document.documentElement;
+      const sun = document.getElementById('theme-icon-sun');
+      const moon = document.getElementById('theme-icon-moon');
+      const isLight = html.classList.toggle('light');
+      sun.classList.toggle('hidden', !isLight);
+      moon.classList.toggle('hidden', isLight);
+      try { localStorage.setItem('grid-theme', isLight ? 'light' : 'dark'); } catch(e) {}
+    }
+
+    function setPreset(newPreset) {
+      state.preset = newPreset;
+      state.activeCell = null;
+
+      ['square_plus','square_minus','diff_squares','custom'].forEach(p => {
+        const row = document.getElementById(`row-preset-${p}`);
+        row.style.background = (p === newPreset) ? 'var(--paper-2)' : 'transparent';
+      });
+
+      const sliders = document.getElementById('custom-sliders');
+      if (newPreset === 'custom') sliders.classList.remove('hidden');
+      else sliders.classList.add('hidden');
+
+      renderExplore();
+    }
+
+    function updateCustomParam(param, value) {
+      const v = parseInt(value);
+      if (param === 'p') {
+        state.customP = v;
+        document.getElementById('label-custom-p').innerText = v >= 0 ? `+${v}` : v;
+      } else {
+        state.customQ = v;
+        document.getElementById('label-custom-q').innerText = v >= 0 ? `+${v}` : v;
+      }
+      renderExplore();
+    }
+
+    function getActivePresetConfig() {
+      if (state.preset !== 'custom') return presets[state.preset];
+
+      const pStr = state.customP >= 0 ? `+${state.customP}` : `${state.customP}`;
+      const qStr = state.customQ >= 0 ? `+${state.customQ}` : `${state.customQ}`;
+      const prod = state.customP * state.customQ;
+      const sum = state.customP + state.customQ;
+
+      return {
+        title: "自訂二次式展開",
+        formula: `(x ${pStr})(x ${qStr}) = x² ${sum >= 0 ? '+' : ''}${sum}x ${prod >= 0 ? '+' : ''}${prod}`,
+        top: ["x", pStr], left: ["x", qStr],
+        cells: {
+          tl: { val: "x²", desc: "x × x = x²" },
+          tr: { val: `${state.customP}x`, desc: `x × (${pStr}) = ${state.customP}x` },
+          bl: { val: `${state.customQ}x`, desc: `(${qStr}) × x = ${state.customQ}x` },
+          br: { val: `${prod >= 0 ? '+' : ''}${prod}`, desc: `(${qStr}) × (${pStr}) = ${prod}` }
+        },
+        combineDesc: `對角線上的 ${state.customP}x 和 ${state.customQ}x 都是含 x 的同類項，相加：(${state.customP} + ${state.customQ})x = ${sum}x。`
+      };
+    }
+
+    function renderExplore() {
+      const config = getActivePresetConfig();
+
+      document.getElementById('formula-title').innerText = config.title;
+      document.getElementById('formula-expression').innerText = config.formula;
+
+      document.getElementById('grid-header-top-0').innerText = config.top[0];
+      document.getElementById('grid-header-top-1').innerText = config.top[1];
+      document.getElementById('grid-header-left-0').innerText = config.left[0];
+      document.getElementById('grid-header-left-1').innerText = config.left[1];
+
+      document.getElementById('cell-tl-val').innerText = config.cells.tl.val;
+      document.getElementById('cell-tr-val').innerText = config.cells.tr.val;
+      document.getElementById('cell-bl-val').innerText = config.cells.bl.val;
+      document.getElementById('cell-br-val').innerText = config.cells.br.val;
+
+      applyCellStyles();
+      updateCellInfo(config);
+
+      document.getElementById('step-1-tl').innerText = config.cells.tl.val;
+      document.getElementById('step-1-tr').innerText = config.cells.tr.val;
+      document.getElementById('step-1-bl').innerText = config.cells.bl.val;
+      document.getElementById('step-1-br').innerText = config.cells.br.val;
+
+      document.getElementById('step-2-combine-desc').innerText = config.combineDesc;
+
+      let step2 = "";
+      if (state.preset === 'diff_squares') step2 = "+ab + (−ab) = 0（互相抵消）";
+      else if (state.preset === 'custom') {
+        const sum = state.customP + state.customQ;
+        step2 = `${state.customP}x + (${state.customQ}x) = ${sum}x`;
+      } else if (state.preset === 'square_minus') step2 = "−ab + (−ab) = −2ab";
+      else step2 = "+ab + (+ab) = 2ab";
+
+      document.getElementById('step-2-math').innerText = step2;
+      document.getElementById('step-3-result').innerText = config.formula.split('=')[1].trim();
+    }
+
+    function applyCellStyles() {
+      const cells = ['tl','tr','bl','br'];
+      cells.forEach(c => {
+        const el = document.getElementById(`cell-${c}`);
+        let cls = "tile relative rounded-xl aspect-square flex flex-col items-center justify-center";
+        if (state.activeCell === c) cls += " active-cell";
+        if (state.showDiagonalHighlight && (c === 'tr' || c === 'bl')) cls += " diag-glow";
+        el.className = cls;
+      });
+    }
+
+    function clickCell(cellId) {
+      state.activeCell = (state.activeCell === cellId) ? null : cellId;
+      const el = document.getElementById(`cell-${cellId}`);
+      el.classList.remove('pop');
+      requestAnimationFrame(() => el.classList.add('pop'));
+      renderExplore();
+    }
+
+    function updateCellInfo(config) {
+      const placeholder = document.getElementById('cell-info-placeholder');
+      const content = document.getElementById('cell-info-content');
+
+      if (state.activeCell) {
+        placeholder.classList.add('hidden');
+        content.classList.remove('hidden');
+        let regionLabel = "A";
+        if (state.activeCell === 'tr') regionLabel = "B";
+        if (state.activeCell === 'bl') regionLabel = "C";
+        if (state.activeCell === 'br') regionLabel = "D";
+        document.getElementById('cell-info-title').innerText = `區域 ${regionLabel} 運算式`;
+        document.getElementById('cell-info-desc').innerText = config.cells[state.activeCell].desc;
+      } else {
+        placeholder.classList.remove('hidden');
+        content.classList.add('hidden');
+      }
+    }
+
+    function toggleDiagonalHighlight() {
+      state.showDiagonalHighlight = !state.showDiagonalHighlight;
+      const btn = document.getElementById('btn-diagonal');
+      const hint = document.getElementById('diagonal-hint');
+
+      if (state.showDiagonalHighlight) {
+        btn.style.background = 'var(--ink)';
+        btn.style.color = 'var(--paper)';
+        btn.innerText = "關閉對角線高亮";
+        hint.classList.remove('hidden');
+      } else {
+        btn.style.background = 'transparent';
+        btn.style.color = 'var(--ink)';
+        btn.innerText = "高亮對角線";
+        hint.classList.add('hidden');
+      }
+      renderExplore();
+    }
+
+    // --- GAME ---
+    const optionPool = [-5,-4,-3,-2,-1,1,2,3,4,5];
+
+    function generateNewQuestion() {
+      const p = optionPool[Math.floor(Math.random()*optionPool.length)];
+      const q = optionPool[Math.floor(Math.random()*optionPool.length)];
+
+      const sum = p+q, prod = p*q;
+      const xTerm = sum===1?"+ x":sum===-1?"− x":sum>0?`+ ${sum}x`:sum<0?`− ${Math.abs(sum)}x`:"";
+      const constTerm = prod>0?`+ ${prod}`:`− ${Math.abs(prod)}`;
+      const display = `x² ${xTerm} ${constTerm}`.replace(/\s+/g,' ').trim();
+
+      state.game.p=p; state.game.q=q; state.game.display=display;
+      state.game.selectedTop=null; state.game.selectedLeft=null;
+      state.game.isChecked=false; state.game.isCorrect=false;
+
+      document.getElementById('game-target-display').innerText = display;
+      document.getElementById('game-feedback').classList.add('hidden');
+
+      populateOptionSelectors();
+      updateGameGridDisplay();
+    }
+
+    function populateOptionSelectors() {
+      const topPool = document.getElementById('option-pool-top');
+      const leftPool = document.getElementById('option-pool-left');
+      topPool.innerHTML=''; leftPool.innerHTML='';
+
+      optionPool.forEach(val => {
+        const label = val>0?`+${val}`:`${val}`;
+
+        const topBtn = document.createElement('button');
+        topBtn.innerText = label;
+        topBtn.onclick = () => selectGameFactor('top', val);
+        styleOptionBtn(topBtn, state.game.selectedTop===val);
+        topPool.appendChild(topBtn);
+
+        const leftBtn = document.createElement('button');
+        leftBtn.innerText = label;
+        leftBtn.onclick = () => selectGameFactor('left', val);
+        styleOptionBtn(leftBtn, state.game.selectedLeft===val);
+        leftPool.appendChild(leftBtn);
+      });
+    }
+
+    function styleOptionBtn(btn, isSelected) {
+      btn.className = "px-3 py-1.5 rounded-lg font-mono text-xs font-bold border ios-btn";
+      if (isSelected) {
+        btn.style.background = 'var(--accent)';
+        btn.style.borderColor = 'var(--accent)';
+        btn.style.color = 'var(--ink)';
+        btn.style.boxShadow = '0 0 14px -2px rgba(255,107,53,0.6)';
+      } else {
+        btn.style.background = 'transparent';
+        btn.style.borderColor = 'var(--rule)';
+        btn.style.color = 'var(--ink)';
+        btn.style.boxShadow = 'none';
+      }
+    }
+
+    function selectGameFactor(side, val) {
+      if (state.game.isChecked) return;
+      if (side==='top') state.game.selectedTop = val;
+      else state.game.selectedLeft = val;
+      populateOptionSelectors();
+      updateGameGridDisplay();
+    }
+
+    function updateGameGridDisplay() {
+      const { selectedTop, selectedLeft } = state.game;
+
+      const topCell = document.getElementById('game-cell-top-p');
+      const topVal = document.getElementById('game-top-p-val');
+      if (selectedTop !== null) {
+        topCell.style.borderColor='var(--accent)'; topCell.style.background='rgba(255,107,53,0.08)';
+        topVal.innerText = selectedTop>0?`+${selectedTop}`:selectedTop;
+      } else {
+        topCell.style.borderColor='rgba(11,14,20,0.12)'; topCell.style.background='rgba(255,255,255,0.55)';
+        topVal.innerText = "?";
+      }
+
+      const leftCell = document.getElementById('game-cell-left-q');
+      const leftVal = document.getElementById('game-left-q-val');
+      if (selectedLeft !== null) {
+        leftCell.style.borderColor='var(--accent)'; leftCell.style.background='rgba(255,107,53,0.08)';
+        leftVal.innerText = selectedLeft>0?`+${selectedLeft}`:selectedLeft;
+      } else {
+        leftCell.style.borderColor='rgba(11,14,20,0.12)'; leftCell.style.background='rgba(255,255,255,0.55)';
+        leftVal.innerText = "?";
+      }
+
+      document.getElementById('game-cell-px').innerText = selectedTop!==null ? `${selectedTop}x` : "px";
+      document.getElementById('game-cell-qx').innerText = selectedLeft!==null ? `${selectedLeft}x` : "qx";
+
+      const prodCell = document.getElementById('game-cell-prod-val');
+      prodCell.innerText = (selectedTop!==null && selectedLeft!==null) ? (selectedTop*selectedLeft) : "PROD";
+
+      const btnAction = document.getElementById('btn-game-action');
+      if (selectedTop!==null && selectedLeft!==null) btnAction.removeAttribute('disabled');
+      else btnAction.setAttribute('disabled','true');
+    }
+
+    function handleGameAction() {
+      if (state.game.isChecked && state.game.isCorrect) {
+        generateNewQuestion();
+        return;
+      }
+
+      const { p, q } = state.game;
+      const t = state.game.selectedTop, l = state.game.selectedLeft;
+      const correct = (t===p && l===q) || (t===q && l===p);
+
+      state.game.isChecked = true;
+      state.game.isCorrect = correct;
+      state.game.attempts += 1;
+
+      const feedback = document.getElementById('game-feedback');
+      const fTitle = document.getElementById('feedback-title');
+      const fText = document.getElementById('feedback-text');
+      feedback.classList.remove('hidden');
+
+      const btnAction = document.getElementById('btn-game-action');
+
+      if (correct) {
+        state.game.score += 10;
+        state.game.streak += 1;
+        if (state.game.streak > state.game.bestStreak) state.game.bestStreak = state.game.streak;
+        document.getElementById('game-score').innerText = state.game.score;
+        document.getElementById('game-streak').innerText = state.game.streak;
+
+        feedback.style.background='rgba(46,125,91,0.10)';
+        feedback.style.borderColor='rgba(46,125,91,0.3)';
+        feedback.style.color='var(--green)';
+        feedback.className = "w-full p-3.5 rounded-xl border text-center pop";
+        fTitle.innerText = "答對了！ +10 分";
+
+        const topStr = t>=0?`+${t}`:t, leftStr = l>=0?`+${l}`:l;
+        fText.innerHTML = `完美重組：(x ${topStr})(x ${leftStr}) 展開即為原式。`;
+
+        btnAction.innerText = "下一題";
+        btnAction.style.background='var(--green)';
+        btnAction.style.color='var(--paper)';
+      } else {
+        state.game.streak = 0;
+        document.getElementById('game-streak').innerText = 0;
+
+        feedback.style.background='rgba(192,70,58,0.08)';
+        feedback.style.borderColor='rgba(192,70,58,0.3)';
+        feedback.style.color='var(--margin)';
+        feedback.className = "w-full p-3.5 rounded-xl border text-center shake";
+        fTitle.innerText = "再試一次";
+        fText.innerHTML = `(${t}) × (${l}) = ${t*l}，相加為 ${t+l}x，與目標不符。`;
+      }
+    }
+
+    function resetGameSelection() {
+      state.game.selectedTop=null; state.game.selectedLeft=null; state.game.isChecked=false;
+      document.getElementById('game-feedback').classList.add('hidden');
+
+      const btnAction = document.getElementById('btn-game-action');
+      btnAction.style.background='var(--ink)';
+      btnAction.style.color='var(--paper)';
+      btnAction.innerText = "驗證";
+
+      populateOptionSelectors();
+      updateGameGridDisplay();
+    }
+
+    window.onload = () => { setPreset('square_plus'); };
+  </script>
+</body>
+</html>
